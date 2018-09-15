@@ -2,8 +2,8 @@
 
 "Multiple Bubbles: The Case of Cryptocurrencies" 
 
-Seminar Selected Topics in Econometrics 
+Seminar: Selected Topics in Econometrics 
 
-Humboldt University of Berlin, WS18 
+Humboldt University of Berlin, SS18 
 
-Dorde Dotlic
+Đorđe Dotlić
