@@ -12,7 +12,7 @@ set.seed(1203)  # for replicability
 data <- fromJSON(getURL(paste0('http://thecrix.de/data/crix.json')))
 #########
 data$date <- as.Date(data$date)
-data <- data[1:which(data$date == "2018-09-11")]
+data <- data[1:which(data$date == "2018-09-11"),]
 #########
 
 T   <- nrow(data)  # Sample size
@@ -49,8 +49,8 @@ for(rwadf in 0:(nrow(data) - windowSize)){
         #rwADF_results_cvs <- c(rwADF_results_cvs, rez_cvs)
         }
 
-rwADF_results_full <- data.frame(row.names = (1:length(cvs_rwADF)))
-rwADF_results_full$test <- as.numeric(test_rwADF)
+rwADF_results_full <- data.frame(row.names = (1:length(cvs_rwADF_full)))
+rwADF_results_full$test <- as.numeric(test_rwADF_full)
 for(n in 1:nrow(rwADF_results_full)){
 rwADF_results_full$cvs_90[n] <- as.numeric(cvs_rwADF_full[[n]][[1]])
 rwADF_results_full$cvs_95[n] <- as.numeric(cvs_rwADF_full[[n]][[2]])
@@ -59,22 +59,22 @@ rwADF_results_full$cvs_99[n] <- as.numeric(cvs_rwADF_full[[n]][[3]])
 #row.names(rwADF_results) <- windowSize:nrow(data)
 rwADF_results_full$date <- as.Date(data$date[windowSize:nrow(data)])
 
-save(file = "rwADF_results_full.RData", rwADF_results_full)
+save(file = "./results/rwADF_results_full.RData", rwADF_results_full)
 
-stamps <- date.stamp(stat = rwADF_results_full$test, cv = rwADF_results_full$cvs)
+stamps_rwADF_full <- date.stamp(stat = rwADF_results_full$test, cv = rwADF_results_full$cvs_95)
 
-X <-  data.frame(data[windowSize:nrow(data),], rwADF_results_full[,1:2])
+X <-  data.frame(data[windowSize:nrow(data),], "test" = rwADF_results_full[,1], "cvs" = rwADF_results_full[,3])
 X$date <- as.Date(X$date)
 
 p_rwadf_full <- ggplot(data = X, aes(x = date)) +
   geom_line(aes(y = test, colour = "The rolling window ADF statistic sequence (left axis)")) +
-  geom_line(aes(y = cvs, colour = "The 90% critical value sequence (left axis)")) +
-  geom_line(aes(y = price/1000, colour = "The S&P 500 index (right axis)")) +
+  geom_line(aes(y = cvs, colour = "The 95% critical value sequence (left axis)")) +
+  geom_line(aes(y = price/1000, colour = "CriX (right axis)")) +
   scale_y_continuous(limits = c(-5, 60), 
                    sec.axis = sec_axis(~.*1000, name = NULL)) +
   #scale_x_date(breaks = pt, labels = c("2014", "2015", "2016", "2017", "2018") ) +
   labs(y = NULL, x = "Date") + 
-  ggtitle("CriX")
+  ggtitle("Rolling-window ADF- Full sample")
 
 p_rwadf_full <- p_rwadf_full + theme(
   panel.background =  element_blank(),
@@ -87,20 +87,23 @@ p_rwadf_full <- p_rwadf_full + theme(
   plot.title = element_text(size = 10, hjust = 0.5, face = "bold")
 )
 
-for(i in 1:nrow(stamps)){
-  p_rwadf_full <- p_rwadf_full + annotate("rect", xmin = X$date[stamps[i,1]], xmax = X$date[stamps[i,2]], 
+for(i in 1:nrow(stamps_rwADF_full)){
+  p_rwadf_full <- p_rwadf_full + annotate("rect", xmin = X$date[stamps_rwADF_full[i,1]], xmax = X$date[stamps_rwADF_full[i,2]], 
                     ymin= -5, ymax = 60,alpha=.35, fill="yellow")
 }
+pdf("./graphs/p_rwadf_full.pdf")
 p_rwadf_full
+dev.off() 
 
 
 #Rolling Window Right tail  ADF Reduced sample----
 data_reduced <- data[365:nrow(data),]
 windowSize_reduced <- round(nrow(data_reduced)*(0.01 + 1.8 / sqrt(nrow(data_reduced))))
-
+windowSize_reduced <- windowSize
 
 test_rwADF_reduced <- list()
 cvs_rwADF_reduced <- list()
+remove(rwadf)
 
 for(rwadf in 0:(nrow(data_reduced) - windowSize_reduced)){
   
@@ -123,7 +126,7 @@ rwADF_results_reduced$date <- as.Date(data_reduced$date[windowSize_reduced:nrow(
 
 save(file = "./results/rwADF_results_reduced.RData", rwADF_results_reduced)
 
-stamps <- date.stamp(stat = rwADF_results_reduced$test, cv = rwADF_results_reduced$cvs_95)
+stamps_rwADF_reduced <- date.stamp(stat = rwADF_results_reduced$test, cv = rwADF_results_reduced$cvs_95)
 
 
 X <-  data.frame(data_reduced[windowSize_reduced:nrow(data_reduced),], "test" =rwADF_results_reduced$test, "cvs" = rwADF_results_reduced$cvs_95)
@@ -131,13 +134,13 @@ X$date <- as.Date(X$date)
 
 p_rwadf_reduced <- ggplot(data = X, aes(x = date)) +
   geom_line(aes(y = test, colour = "The rolling window ADF statistic sequence (left axis)")) +
-  geom_line(aes(y = cvs, colour = "The 90% critical value sequence (left axis)")) +
-  geom_line(aes(y = price/1000, colour = "The S&P 500 index (right axis)")) +
+  geom_line(aes(y = cvs, colour = "The 95% critical value sequence (left axis)")) +
+  geom_line(aes(y = price/1000, colour = "CriX (right axis)")) +
   scale_y_continuous(limits = c(-5, 60), 
                      sec.axis = sec_axis(~.*1000, name = NULL)) +
   #scale_x_date(breaks = pt, labels = c("2014", "2015", "2016", "2017", "2018") ) +
   labs(y = NULL, x = "Date") + 
-  ggtitle("CriX")
+  ggtitle("Rolling-window ADF- Reduced sample")
 
 p_rwadf_reduced <- p_rwadf_reduced + theme(
   panel.background =  element_blank(),
@@ -150,11 +153,15 @@ p_rwadf_reduced <- p_rwadf_reduced + theme(
   plot.title = element_text(size = 10, hjust = 0.5, face = "bold")
 )
 
-for(i in 1:nrow(stamps)){
-  p_rwadf_reduced <- p_rwadf_reduced + annotate("rect", xmin = X$date[stamps[i,1]], xmax = X$date[stamps[i,2]], 
+for(i in 1:nrow(stamps_rwADF_reduced)){
+  p_rwadf_reduced <- p_rwadf_reduced + annotate("rect", xmin = X$date[stamps_rwADF_reduced[i,1]], xmax = X$date[stamps_rwADF_reduced[i,2]], 
                                                 ymin= -5, ymax = 60,alpha=.35, fill="yellow")
 }
+
+pdf("./graphs/p_rwadf_reduced.pdf")
 p_rwadf_reduced
+dev.off() 
+
 
 
 
@@ -252,14 +259,14 @@ X <-  data.frame(data[r0:nrow(data),] ,"test" = res.stat_full[[1]]$badfs, "cvs" 
 X$date <- as.Date(X$date)
 
 p_badf_full <- ggplot(data = X, aes(x = date)) +
-  geom_line(aes(y = test, colour = "The rolling window ADF statistic sequence (left axis)")) +
-  geom_line(aes(y = cvs, colour = "The 90% critical value sequence (left axis)")) +
-  geom_line(aes(y = price/1000, colour = "The S&P 500 index (right axis)")) +
+  geom_line(aes(y = test, colour = "The ADF statistic sequence (left axis)")) +
+  geom_line(aes(y = cvs, colour = "The 95% critical value sequence (left axis)")) +
+  geom_line(aes(y = price/1000, colour = "CriX (right axis)")) +
   scale_y_continuous(limits = c(-5, 60), 
                      sec.axis = sec_axis(~.*1000, name = NULL)) +
   #scale_x_date(breaks = pt, labels = c("2014", "2015", "2016", "2017", "2018") ) +
   labs(y = NULL, x = "Date") + 
-  ggtitle("CriX")
+  ggtitle("PWY- Full sample")
 
 p_badf_full <- p_badf_full + theme(
   panel.background =  element_blank(),
@@ -272,9 +279,9 @@ p_badf_full <- p_badf_full + theme(
   plot.title = element_text(size = 10, hjust = 0.5, face = "bold")
 )
 
-for(i in 1:nrow(stamps)){
-  p_badf_full <- p_badf_full + annotate("rect", xmin = X$date[stamps[i,1]], xmax = X$date[stamps[i,2]], 
-                    ymin= -5, ymax = 60,alpha=.35, fill="yellow")
+for(i in 1:nrow(stamps_badf_full)){
+  p_badf_full <- p_badf_full + annotate("rect", xmin = X$date[stamps_badf_full[i,1]], xmax = X$date[stamps_badf_full[i,2]], 
+                                        ymin= -5, ymax = 60,alpha=.35, fill="yellow")
 }
 
 pdf("./graphs/p_badf_full.pdf")
@@ -290,14 +297,14 @@ X <-  data.frame(data_reduced[windowSize_reduced:nrow(data_reduced),] ,"test" = 
 X$date <- as.Date(X$date)
 
 p_badf_reduced <- ggplot(data = X, aes(x = date)) +
-  geom_line(aes(y = test, colour = "The rolling window ADF statistic sequence (left axis)")) +
-  geom_line(aes(y = cvs, colour = "The 90% critical value sequence (left axis)")) +
-  geom_line(aes(y = price/1000, colour = "The S&P 500 index (right axis)")) +
+  geom_line(aes(y = test, colour = "The ADF statistic sequence (left axis)")) +
+  geom_line(aes(y = cvs, colour = "The 95% critical value sequence (left axis)")) +
+  geom_line(aes(y = price/1000, colour = "CriX (right axis)")) +
   scale_y_continuous(limits = c(-5, 60), 
                      sec.axis = sec_axis(~.*1000, name = NULL)) +
   #scale_x_date(breaks = pt, labels = c("2014", "2015", "2016", "2017", "2018") ) +
   labs(y = NULL, x = "Date") + 
-  ggtitle("CriX")
+  ggtitle("PWY- Reduced sample")
 
 p_badf_reduced <- p_badf_reduced + theme(
   panel.background =  element_blank(),
@@ -310,9 +317,9 @@ p_badf_reduced <- p_badf_reduced + theme(
   plot.title = element_text(size = 10, hjust = 0.5, face = "bold")
 )
 
-for(i in 1:nrow(stamps)){
-  p_badf_reduced <- p_badf_reduced + annotate("rect", xmin = X$date[stamps[i,1]], xmax = X$date[stamps[i,2]], 
-                                        ymin= -5, ymax = 60,alpha=.35, fill="yellow")
+for(i in 1:nrow(stamps_badf_reduced)){
+  p_badf_reduced <- p_badf_reduced + annotate("rect", xmin = X$date[stamps_badf_reduced[i,1]], xmax = X$date[stamps_badf_reduced[i,2]], 
+                                              ymin= -5, ymax = 60,alpha=.35, fill="yellow")
 }
 
 pdf("./graphs/p_badf_reduced.pdf")
@@ -320,23 +327,19 @@ p_badf_reduced
 dev.off() 
 
 
-
-
-
-
 #P_bsadf_full----
 X <-  data.frame(data[r0:nrow(data),] ,"test" = res.stat_full[[1]]$bsadfs, "cvs" = t(t(quantile.bsadfs[2,])))   #Generalna prica, posle cu da prilagodim
 X$date <- as.Date(X$date)
 
 p_bsadf_full <- ggplot(data = X, aes(x = date)) +
-  geom_line(aes(y = test, colour = "The rolling window ADF statistic sequence (left axis)")) +
-  geom_line(aes(y = cvs, colour = "The 90% critical value sequence (left axis)")) +
-  geom_line(aes(y = price/1000, colour = "The S&P 500 index (right axis)")) +
+  geom_line(aes(y = test, colour = "The BSADF statistic sequence (left axis)")) +
+  geom_line(aes(y = cvs, colour = "The 95% critical value sequence (left axis)")) +
+  geom_line(aes(y = price/1000, colour = "CriX (right axis)")) +
   scale_y_continuous(limits = c(-5, 60), 
                      sec.axis = sec_axis(~.*1000, name = NULL)) +
   #scale_x_date(breaks = pt, labels = c("2014", "2015", "2016", "2017", "2018") ) +
   labs(y = NULL, x = "Date") + 
-  ggtitle("CriX")
+  ggtitle("PSY- Full sample")
 
 p_bsadf_full <- p_bsadf_full + theme(
   panel.background =  element_blank(),
@@ -349,8 +352,8 @@ p_bsadf_full <- p_bsadf_full + theme(
   plot.title = element_text(size = 10, hjust = 0.5, face = "bold")
 )
 
-for(i in 1:nrow(stamps)){
-  p_bsadf_full <- p_bsadf_full + annotate("rect", xmin = X$date[stamps[i,1]], xmax = X$date[stamps[i,2]], 
+for(i in 1:nrow(stamps_bsadf_full)){
+  p_bsadf_full <- p_bsadf_full + annotate("rect", xmin = X$date[stamps_bsadf_full[i,1]], xmax = X$date[stamps_bsadf_full[i,2]], 
                                           ymin= -5, ymax = 60,alpha=.35, fill="yellow")
 }
 
@@ -367,14 +370,14 @@ X <-  data.frame(data_reduced[windowSize_reduced:nrow(data_reduced),] ,"test" = 
 X$date <- as.Date(X$date)
 
 p_bsadf_reduced <- ggplot(data = X, aes(x = date)) +
-  geom_line(aes(y = test, colour = "The rolling window ADF statistic sequence (left axis)")) +
-  geom_line(aes(y = cvs, colour = "The 90% critical value sequence (left axis)")) +
-  geom_line(aes(y = price/1000, colour = "The S&P 500 index (right axis)")) +
+  geom_line(aes(y = test, colour = "The BSADF statistic sequence (left axis)")) +
+  geom_line(aes(y = cvs, colour = "The 95% critical value sequence (left axis)")) +
+  geom_line(aes(y = price/1000, colour = "CriX (right axis)")) +
   scale_y_continuous(limits = c(-5, 60), 
                      sec.axis = sec_axis(~.*1000, name = NULL)) +
   #scale_x_date(breaks = pt, labels = c("2014", "2015", "2016", "2017", "2018") ) +
   labs(y = NULL, x = "Date") + 
-  ggtitle("CriX")
+  ggtitle("PSY- Reduced sample")
 
 p_bsadf_reduced <- p_bsadf_reduced + theme(
   panel.background =  element_blank(),
@@ -387,8 +390,8 @@ p_bsadf_reduced <- p_bsadf_reduced + theme(
   plot.title = element_text(size = 10, hjust = 0.5, face = "bold")
 )
 
-for(i in 1:nrow(stamps)){
-  p_bsadf_reduced <- p_bsadf_reduced + annotate("rect", xmin = X$date[stamps[i,1]], xmax = X$date[stamps[i,2]], 
+for(i in 1:nrow(stamps_bsadf_reduced)){
+  p_bsadf_reduced <- p_bsadf_reduced + annotate("rect", xmin = X$date[stamps_bsadf_reduced[i,1]], xmax = X$date[stamps_bsadf_reduced[i,2]], 
                                                 ymin= -5, ymax = 60,alpha=.35, fill="yellow")
 }
 
