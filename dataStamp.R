@@ -1,6 +1,5 @@
-date.stamp <- function(stat, cv, delta = 0.8){
+date.stamp <- function(stat, cv, n ,delta = 0.8){
   
-  n <- nrow(data)
   # a "stupid" function to conduct the date-stamp strategy
   dif <- stat - cv
   dif.temp <- cumsum(dif > 0)

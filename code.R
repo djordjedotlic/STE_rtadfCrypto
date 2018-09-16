@@ -26,8 +26,8 @@ r0  <- round(T*(0.01 + 1.8 / sqrt(T)))  # Minimal window size
 #print(testDf)  
 
 #if( testDf$`test statistic`[1] >= testDf$`critical values`[[1]]){
-  print("We can reject the null hypothesis and conclude that the time series express traits of a rational bubble")
-} #else{ print("We cannot reject the null hypothesis")}
+#  print("We can reject the null hypothesis and conclude that the time series express traits of a rational bubble")
+#} else{ print("We cannot reject the null hypothesis")}
 
 
 
@@ -61,7 +61,7 @@ rwADF_results_full$date <- as.Date(data$date[windowSize:nrow(data)])
 
 save(file = "./results/rwADF_results_full.RData", rwADF_results_full)
 
-stamps_rwADF_full <- date.stamp(stat = rwADF_results_full$test, cv = rwADF_results_full$cvs_95)
+stamps_rwADF_full <- date.stamp(stat = rwADF_results_full$test, cv = rwADF_results_full$cvs_95, n = nrow(data))
 
 X <-  data.frame(data[windowSize:nrow(data),], "test" = rwADF_results_full[,1], "cvs" = rwADF_results_full[,3])
 X$date <- as.Date(X$date)
@@ -99,7 +99,6 @@ dev.off()
 #Rolling Window Right tail  ADF Reduced sample----
 data_reduced <- data[365:nrow(data),]
 windowSize_reduced <- round(nrow(data_reduced)*(0.01 + 1.8 / sqrt(nrow(data_reduced))))
-windowSize_reduced <- windowSize
 
 test_rwADF_reduced <- list()
 cvs_rwADF_reduced <- list()
@@ -109,7 +108,7 @@ for(rwadf in 0:(nrow(data_reduced) - windowSize_reduced)){
   
   windowStart <- rwadf + 1 
   windowEnd   <- windowStart + windowSize_reduced - 1
-  test_rwADF_reduced[rwadf + 1] <- rtadf(data[windowStart:windowEnd,2], r0 = windowSize_reduced, test = "adf")  # estimate test statistic and date-stamping sequence
+  test_rwADF_reduced[rwadf + 1] <- rtadf(data_reduced[windowStart:windowEnd,2], r0 = windowSize_reduced, test = "adf")  # estimate test statistic and date-stamping sequence
   #rwADF_results_test <- c(rwADF_results_test, test_rwADF)
   cvs_rwADF_reduced[[rwadf + 1]]  <- rtadfSimPar(windowSize_reduced, nrep = 1000, r0 = windowSize_reduced, test = "adf")
   #rwADF_results_cvs <- c(rwADF_results_cvs, rez_cvs)
@@ -126,7 +125,7 @@ rwADF_results_reduced$date <- as.Date(data_reduced$date[windowSize_reduced:nrow(
 
 save(file = "./results/rwADF_results_reduced.RData", rwADF_results_reduced)
 
-stamps_rwADF_reduced <- date.stamp(stat = rwADF_results_reduced$test, cv = rwADF_results_reduced$cvs_95)
+stamps_rwADF_reduced <- date.stamp(stat = rwADF_results_reduced$test, cv = rwADF_results_reduced$cvs_95, n = length(rwADF_results_reduced$test))
 
 
 X <-  data.frame(data_reduced[windowSize_reduced:nrow(data_reduced),], "test" =rwADF_results_reduced$test, "cvs" = rwADF_results_reduced$cvs_95)
@@ -158,7 +157,7 @@ for(i in 1:nrow(stamps_rwADF_reduced)){
                                                 ymin= -5, ymax = 60,alpha=.35, fill="yellow")
 }
 
-pdf("./graphs/p_rwadf_reduced.pdf")
+pdf("./graphs/p_rwadf_reduced_95.pdf")
 p_rwadf_reduced
 dev.off() 
 
