@@ -1,6 +1,6 @@
 # STE_rtadfCrypto
 
-"Exuberance in Prices of Cryptocurrencies: Testing for Multiple Bubbles" 
+"Exuberance in Prices of Cryptocurrencies: Testing for Market Bubbles" 
 
 Seminar: Selected Topics in Econometrics 
 
