@@ -1,6 +1,6 @@
 # STE_rtadfCrypto
 
-"Multiple Bubbles: The Case of Cryptocurrencies" 
+"Exuberance in Prices of Cryptocurrencies: Testing for Multiple Bubbles" 
 
 Seminar: Selected Topics in Econometrics 
 
